@@ -13,21 +13,17 @@ const Post: FC<Props> = ({ post, changePost, deletePost }) => {
   const [title, setTitle] = useState(post.title);
   const [content, setContent] = useState(post.content);
   const [categoryId, setCategoryId] = useState(post.category_id);
-
   const handleEdit = () => setEditing(true);
-
   const handleSave = async () => {
     await changePost(post.id, title, content, categoryId);
     setEditing(false);
   };
-
   const handleCancel = () => {
     setTitle(post.title);
     setContent(post.content);
     setCategoryId(post.category_id);
     setEditing(false);
   };
-
   const handleDelete = () => {
     if (confirm("Delete this post permanently?")) {
       deletePost(post.id);
