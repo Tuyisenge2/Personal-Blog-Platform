@@ -15,6 +15,7 @@ import { JwtService } from "@/services/jwtService";
 import Navbar from "./Navbar";
 import { Toaster } from "sonner";
 import News from "./News/page";
+import PostsPage from "./posts/page";
 
 function HomeContent() {
   // const router = useRouter();
@@ -46,11 +47,12 @@ function HomeContent() {
 
   return (
     <div className=' w-[100%] h-[100%]'>
-      <Toaster position='top-right' />
+      {/* <Toaster position='top-right' />
       <Navbar />
       <section id='blogs' className=''>
         <News />
-      </section>
+      </section> */}
+      <PostsPage />
     </div>
   );
 }
@@ -80,4 +82,43 @@ export default function Home() {
 //   // return <Categories initialCategories={CatData} />;
 //   return <Posts initialPosts={postData} />;
 
+// }
+
+// "use client";
+
+// import { getAllCategories } from "@/actions/categories";
+// import { getAllPosts } from "@/actions/posts";
+// import { getData } from "@/actions/todoAction";
+// import Categories from "@/components/categories";
+// import Posts from "@/components/posts";
+// import Todos from "@/components/todos";
+// import { useEffect, Suspense } from "react";
+// import { useRouter, useSearchParams } from "next/navigation";
+// import { useAppDispatch, useAppSelector } from "@/store/hooks";
+// import { googleSignInSuccess } from "@/store/slices/googleSlice";
+// import useToast from "../hooks/useToast";
+// import { JwtService } from "@/services/jwtService";
+// import Navbar from "./Navbar";
+// import { Toaster } from "sonner";
+// import News from "./News/page";
+// import UploadForm from "@/components/UploadForm";
+
+// function HomeContent() {
+
+//   return (
+//     <div className=' w-[100%] h-[100%]'>
+//       <Toaster position='top-right' />
+//       <Navbar />
+//       <section id='blogs' className=''>
+//         <News />
+//       </section>
+//     </div>
+//   );
+// }
+
+// export default function Home() {
+
+//   return (
+//     <UploadForm/>
+//    );
 // }

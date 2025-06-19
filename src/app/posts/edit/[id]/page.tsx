@@ -5,6 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { getAllCategories } from "@/actions/categories";
 import { getPost, updatePost } from "@/actions/posts";
 import { ClipLoader } from "react-spinners";
+import Image from "next/image";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { useCloudinary } from "@/hooks/useCloudinary";
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -15,6 +18,9 @@ export default function EditPostPage() {
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
+  const { uploadImage, loading: uploadLoading, error: uploadError } = useCloudinary();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,6 +36,8 @@ export default function EditPostPage() {
         setContent(postData.content);
         setCategoryId(postData.category_id);
         setCategories(categoriesData);
+        setImageUrl(postData.image_url);
+        setOriginalImageUrl(postData.image_url);
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
@@ -40,11 +48,37 @@ export default function EditPostPage() {
     fetchData();
   }, [params.id]);
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const url = await uploadImage(file);
+      setImageUrl(url);
+    } catch (error) {
+      console.error("Image upload failed:", error);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageUrl(null);
+  };
+
+  const handleRestoreOriginal = () => {
+    setImageUrl(originalImageUrl);
+  };
+
   const handleUpdate = async () => {
     if (!title.trim() || !content.trim()) return;
     setSubmitting(true);
     try {
-      await updatePost(Number(params.id), title, content, categoryId);
+      await updatePost(
+        Number(params.id), 
+        title, 
+        content, 
+        categoryId,
+        imageUrl // Include the image URL in the update
+      );
       router.push("/posts");
     } catch (error) {
       console.error("Failed to update post:", error);
@@ -67,6 +101,84 @@ export default function EditPostPage() {
         <h2 className="text-2xl font-bold mb-6 text-center">Edit Post</h2>
 
         <div className="space-y-4">
+          {/* Image Upload Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Featured Image
+            </label>
+            
+            {imageUrl ? (
+              <div className="relative group">
+                <div className="relative h-64 w-full rounded-lg overflow-hidden mb-2">
+                  <Image
+                    src={imageUrl}
+                    alt="Post preview"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <label className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer">
+                    <FiEdit2 className="text-gray-600" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <button
+                    onClick={handleRemoveImage}
+                    className="p-2 bg-white rounded-full shadow-md hover:bg-red-50 transition"
+                  >
+                    <FiTrash2 className="text-red-600" />
+                  </button>
+                </div>
+                {imageUrl !== originalImageUrl && (
+                  <button
+                    onClick={handleRestoreOriginal}
+                    className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    Restore original image
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <label className="cursor-pointer">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <svg
+                      className="w-12 h-12 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span className="text-sm text-gray-600">
+                      {uploadLoading ? "Uploading..." : "Click to upload an image"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </div>
+                </label>
+              </div>
+            )}
+            {uploadError && (
+              <p className="mt-2 text-sm text-red-600">{uploadError}</p>
+            )}
+          </div>
+
+          {/* Title Input */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
               Title
@@ -81,6 +193,7 @@ export default function EditPostPage() {
             />
           </div>
 
+          {/* Content Input */}
           <div>
             <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
               Content
@@ -94,6 +207,7 @@ export default function EditPostPage() {
             />
           </div>
 
+          {/* Category Select */}
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
               Category
@@ -113,6 +227,7 @@ export default function EditPostPage() {
             </select>
           </div>
 
+          {/* Action Buttons */}
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
@@ -123,7 +238,7 @@ export default function EditPostPage() {
             </button>
             <button
               onClick={handleUpdate}
-              disabled={!title.trim() || !content.trim() || submitting}
+              disabled={!title.trim() || !content.trim() || submitting || uploadLoading}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center min-w-[100px]"
             >
               {submitting ? (
@@ -142,42 +257,31 @@ export default function EditPostPage() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 // "use client";
 
 // import { useState, useEffect } from "react";
-// import { useRouter } from "next/navigation";
+// import { useParams, useRouter } from "next/navigation";
 // import { getAllCategories } from "@/actions/categories";
 // import { getPost, updatePost } from "@/actions/posts";
 // import { ClipLoader } from "react-spinners";
 
-// export default function EditPostPage({ params }: { params: { id: string } }) {
+// export default function EditPostPage() {
 //   const router = useRouter();
+//   const params = useParams<{ id: string }>();
 //   const [title, setTitle] = useState("");
 //   const [content, setContent] = useState("");
 //   const [categoryId, setCategoryId] = useState<number | null>(null);
-//   const [categories, setCategories] = useState<{ id: number; name: string }[]>(
-//     []
-//   );
+//   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
 //   const [loading, setLoading] = useState(true);
 //   const [submitting, setSubmitting] = useState(false);
 
 //   useEffect(() => {
 //     const fetchData = async () => {
 //       try {
+//         const postId = Number(params.id);
+        
 //         const [postData, categoriesData] = await Promise.all([
-//           getPost(Number(params.id)),
+//           getPost(postId),
 //           getAllCategories(),
 //         ]);
 
@@ -210,65 +314,56 @@ export default function EditPostPage() {
 
 //   if (loading) {
 //     return (
-//       <div className='flex justify-center items-center min-h-[200px]'>
-//         <ClipLoader color='#3B82F6' size={40} />
+//       <div className="flex justify-center items-center min-h-[200px]">
+//         <ClipLoader color="#3B82F6" size={40} />
 //       </div>
 //     );
 //   }
 
 //   return (
-//     <div className='flex justify-center p-4'>
-//       <div className='w-full max-w-2xl border border-gray-200 rounded-lg p-6 shadow-sm'>
-//         <h2 className='text-2xl font-bold mb-6 text-center'>Edit Post</h2>
+//     <div className="flex justify-center p-4">
+//       <div className="w-full max-w-2xl border border-gray-200 rounded-lg p-6 shadow-sm">
+//         <h2 className="text-2xl font-bold mb-6 text-center">Edit Post</h2>
 
-//         <div className='space-y-4'>
+//         <div className="space-y-4">
 //           <div>
-//             <label
-//               htmlFor='title'
-//               className='block text-sm font-medium text-gray-700 mb-1'
-//             >
+//             <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
 //               Title
 //             </label>
 //             <input
-//               id='title'
-//               type='text'
+//               id="title"
+//               type="text"
 //               value={title}
 //               onChange={(e) => setTitle(e.target.value)}
-//               placeholder='Post title'
-//               className='w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+//               placeholder="Post title"
+//               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 //             />
 //           </div>
 
 //           <div>
-//             <label
-//               htmlFor='content'
-//               className='block text-sm font-medium text-gray-700 mb-1'
-//             >
+//             <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
 //               Content
 //             </label>
 //             <textarea
-//               id='content'
+//               id="content"
 //               value={content}
 //               onChange={(e) => setContent(e.target.value)}
-//               placeholder='Post content'
-//               className='w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[150px]'
+//               placeholder="Post content"
+//               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[150px]"
 //             />
 //           </div>
 
 //           <div>
-//             <label
-//               htmlFor='category'
-//               className='block text-sm font-medium text-gray-700 mb-1'
-//             >
+//             <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
 //               Category
 //             </label>
 //             <select
-//               id='category'
+//               id="category"
 //               value={categoryId || ""}
 //               onChange={(e) => setCategoryId(Number(e.target.value) || null)}
-//               className='w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+//               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 //             >
-//               <option value=''>Select a category</option>
+//               <option value="">Select a category</option>
 //               {categories.map((category) => (
 //                 <option key={category.id} value={category.id}>
 //                   {category.name}
@@ -277,21 +372,21 @@ export default function EditPostPage() {
 //             </select>
 //           </div>
 
-//           <div className='flex justify-end space-x-3 pt-4'>
+//           <div className="flex justify-end space-x-3 pt-4">
 //             <button
-//               type='button'
+//               type="button"
 //               onClick={() => router.back()}
-//               className='px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition'
+//               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition"
 //             >
 //               Cancel
 //             </button>
 //             <button
 //               onClick={handleUpdate}
 //               disabled={!title.trim() || !content.trim() || submitting}
-//               className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center min-w-[100px]'
+//               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center min-w-[100px]"
 //             >
 //               {submitting ? (
-//                 <ClipLoader color='#ffffff' size={20} />
+//                 <ClipLoader color="#ffffff" size={20} />
 //               ) : (
 //                 "Update Post"
 //               )}
@@ -302,3 +397,11 @@ export default function EditPostPage() {
 //     </div>
 //   );
 // }
+
+
+
+
+
+
+
+

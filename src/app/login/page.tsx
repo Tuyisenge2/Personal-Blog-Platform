@@ -1,41 +1,50 @@
 "use client";
-
-import { useEffect, useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-// import {
-//   loginStart,
-//   loginSuccess,
-//   loginFailure,
-// } from "@/store/slices/authSlice";
-import {
-  googleSignInStart,
-  googleSignInSuccess,
-} from "@/store/slices/googleSlice";
+import { Suspense, useState } from "react";
+import { useRouter } from "next/navigation";
+import { loginUser } from "@/actions/users";
+import { ClipLoader } from "react-spinners";
 import Image from "next/image";
 import basketballPlayer from "../../../public/bg-home.png";
-// import { loginSchema, type LoginFormData } from "@/validations/auth";
-// import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-// import { authService } from "@/services/authService";
-import { JwtService } from "@/services/jwtService";
-
 import useToast from "@/hooks/useToast";
+
 function LoginContent() {
   const router = useRouter();
   const { showSuccess, showError } = useToast();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const dispatch = useAppDispatch();
-  const {
-    isAuthenticated,
-    loading: googleLoading,
-    error: googleError,
-  } = useAppSelector((state) => state.google);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const result = await loginUser(formData.email, formData.password);
+
+      if (result.error) {
+        setError(result.error);
+        showError(result.error);
+        return;
+      }
+
+      showSuccess("Login successful!");
+      router.push("/dashboard"); // Redirect to dashboard after successful login
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
+      showError("Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className='flex flex-col md:flex-row h-screen'>
@@ -46,15 +55,21 @@ function LoginContent() {
             Welcome back! Please enter your details.
           </p>
 
-          <form className='space-y-4'>
+          {error && (
+            <div className='mb-4 p-3 bg-red-100 text-red-700 rounded-md'>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className='space-y-4'>
             <div>
               <input
                 type='email'
+                name='email'
                 placeholder='Enter your email'
-                className={`border rounded-md p-2 w-full border-gray-300`}
-                onChange={(value) => {
-                  setEmail(value.target.value);
-                }}
+                value={formData.email}
+                onChange={handleChange}
+                className='border rounded-md p-2 w-full border-gray-300'
                 required
                 pattern='[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$'
                 title='Please enter a valid email address (e.g., user@example.com)'
@@ -64,61 +79,41 @@ function LoginContent() {
             <div>
               <input
                 type='password'
+                name='password'
                 placeholder='**********'
-                className={`border rounded-md p-2 w-full border-gray-300 `}
-                onChange={(value) => {
-                  setPassword(value.target.value);
-                }}
+                value={formData.password}
+                onChange={handleChange}
+                className='border rounded-md p-2 w-full border-gray-300'
                 required
-                minLength={4}
+                minLength={6}
                 title='Password must be at least 6 characters long'
               />
             </div>
 
-            <div className='flex items-center justify-between w-full'>
-              <label className='flex items-center'>
-                <input type='checkbox' className='mr-2' />
-                Remember me
-              </label>
-              <a href='#' className='text-blue-600 hover:underline'>
-                Forgot password?
-              </a>
-            </div>
-
-            <div className='text-red-500 text-sm'>googleError</div>
-
             <button
               type='submit'
-              className='bg-red-600 text-white px-6 py-2 rounded-lg w-full hover:bg-red-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed'
+              disabled={loading}
+              className='bg-red-600 text-white px-6 py-2 rounded-lg w-full hover:bg-red-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center'
             >
-              Sign in
+              {loading ? <ClipLoader color='#ffffff' size={20} /> : "Sign in"}
             </button>
-
-            <button
-              type='button'
-              disabled={googleLoading}
-              className='bg-gray-200 text-gray-800 px-6 py-2 rounded-lg w-full hover:bg-gray-300 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed'
-            >
-              {googleLoading
-                ? "Signing in with Google..."
-                : "Sign in with Google"}
-            </button>
-
             <p className='text-gray-600'>
               Don't have an account?{" "}
-              <a href='#' className='text-blue-600 hover:underline'>
-                Sign up with google
+              <a href='/register' className='text-blue-600 hover:underline'>
+                Sign up
               </a>
             </p>
           </form>
         </div>
       </div>
 
-      <div className='hidden flex-1 md:flex md:w-full w-full justify-center items-center bg-gray-200'>
+      <div className='hidden md:flex flex-1 bg-gray-200 relative'>
         <Image
           src={basketballPlayer}
           alt='Basketball Player Illustration'
-          className='object-cover w-[100%] h-[100%]'
+          fill
+          className='object-cover'
+          priority
         />
       </div>
     </div>

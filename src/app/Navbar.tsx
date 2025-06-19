@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import React, { useEffect, useState } from "react";
 import { IoMdClose, IoMdMenu } from "react-icons/io";
-
+import Link from "next/link";
 export default function Navbar() {
   const [toggleOpen, setToggleOpen] = useState(false);
   const [screenWidth, setScreenWidth] = useState(0);
@@ -55,12 +55,12 @@ export default function Navbar() {
                 </a>
               </li>
               <li className='hover:text-red-700  hover:ease-in'>
-                <a
-                  href='#about'
-                  className={activeSection === "about" ? "text-red-700 " : ""}
+                <Link
+                  href='/posts/create' // This should match your page route
+                  className={activeSection === "about" ? "text-red-700" : ""}
                 >
-                  Add Blog{" "}
-                </a>
+                  Add Blog
+                </Link>
               </li>
             </ul>
           </div>

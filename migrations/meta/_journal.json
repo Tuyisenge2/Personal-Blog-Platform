@@ -15,6 +15,20 @@
       "when": 1749832766975,
       "tag": "0001_broken_living_lightning",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1749903776040,
+      "tag": "0002_mysterious_ghost_rider",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1750332178794,
+      "tag": "0003_tough_lifeguard",
+      "breakpoints": true
     }
   ]
 }
