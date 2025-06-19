@@ -28,6 +28,7 @@ export const posts = pgTable("posts", {
   content: text("content").notNull(),
   image_url: varchar("image_url", { length: 500 }), 
   category_id: integer("category_id").references(() => categories.id),
+  author_id: integer("author_id").references(() => users.id),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });

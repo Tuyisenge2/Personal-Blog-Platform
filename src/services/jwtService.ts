@@ -10,8 +10,7 @@ interface JwtPayload {
 }
 
 export class JwtService {
-  private static readonly TOKEN_KEY = "auth_token";
-
+  private static readonly TOKEN_KEY = "authToken";
   static decodeToken(token: string): JwtPayload | null {
     try {
       return jwtDecode<JwtPayload>(token);

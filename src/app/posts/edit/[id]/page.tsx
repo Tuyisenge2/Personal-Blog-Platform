@@ -77,7 +77,7 @@ export default function EditPostPage() {
         title, 
         content, 
         categoryId,
-        imageUrl // Include the image URL in the update
+        imageUrl as string// Include the image URL in the update
       );
       router.push("/posts");
     } catch (error) {

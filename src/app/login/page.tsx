@@ -21,23 +21,28 @@ function LoginContent() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
+  
     try {
       const result = await loginUser(formData.email, formData.password);
-
+  
       if (result.error) {
         setError(result.error);
         showError(result.error);
         return;
       }
-
+  
+      // Store token in localStorage
+      if (result.token) {
+        localStorage.setItem('authToken', result.token);
+        // Optionally store user data if needed
+        localStorage.setItem('user', JSON.stringify(result.user));
+      }
       showSuccess("Login successful!");
-      router.push("/dashboard"); // Redirect to dashboard after successful login
+      router.push("/posts");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
       showError("Login failed");

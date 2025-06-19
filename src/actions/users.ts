@@ -4,6 +4,7 @@ import { db } from "@/db/drizzle";
 import { users } from "@/db/schema";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import { generateToken } from "@/lib/actions/auth";
 
 const hashPassword = async (password: string): Promise<string> => {
     return await bcrypt.hash(password, 10);
@@ -62,23 +63,10 @@ const hashPassword = async (password: string): Promise<string> => {
     }
   };
 
-
-
-
-
-
-
-
-
-
-
-
-
-  // Add this to your existing users actions file
-export const loginUser = async (
+  export const loginUser = async (
     email: string,
     password: string
-  ): Promise<{ user?: any; error?: string }> => {
+  ): Promise<{ user?: any; token?: string; error?: string }> => {
     try {
       // Find user by email
       const user = await getUserByEmail(email);
@@ -92,15 +80,50 @@ export const loginUser = async (
         return { error: "Invalid credentials" };
       }
   
-      // Return user data (excluding password)
+      // Generate JWT token
+      const token = generateToken(user.id, user.is_admin);
+  
+      // Return user data (excluding password) and token
       const { password: _, ...userWithoutPassword } = user;
-      return { user: userWithoutPassword };
+      return { 
+        user: userWithoutPassword,
+        token 
+      };
       
     } catch (error) {
       console.error("Login failed:", error);
       return { error: "Something went wrong" };
     }
   };
+
+
+//   // Add this to your existing users actions file
+// export const loginUser = async (
+//     email: string,
+//     password: string
+//   ): Promise<{ user?: any; error?: string }> => {
+//     try {
+//       // Find user by email
+//       const user = await getUserByEmail(email);
+//       if (!user) {
+//         return { error: "Invalid credentials" };
+//       }
+  
+//       // Compare hashed password
+//       const isValid = await bcrypt.compare(password, user.password);
+//       if (!isValid) {
+//         return { error: "Invalid credentials" };
+//       }
+  
+//       // Return user data (excluding password)
+//       const { password: _, ...userWithoutPassword } = user;
+//       return { user: userWithoutPassword };
+      
+//     } catch (error) {
+//       console.error("Login failed:", error);
+//       return { error: "Something went wrong" };
+//     }
+//   };
 
 // Update user profile to match schema
 export const updateUser = async (
