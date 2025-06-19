@@ -1,8 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import resWeb from "../../../public/resWeb.png";
 import AI from "../../../public/resWeb.png";
-import Js from "../../../public/resWeb.png";
 
 import Image from "next/image";
 import { IoMdClose } from "react-icons/io";

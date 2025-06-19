@@ -1,69 +1,48 @@
-import { jwtDecode } from "jwt-decode";
+// src/lib/actions/auth.ts
+import jwt, { JwtPayload } from "jsonwebtoken";
 
-interface JwtPayload {
-  email: string;
-  name: string;
-  picture: string;
-  role: string;
-  exp: number;
-  iat: number;
+// Ensure JWT_SECRET is defined
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET is not defined in environment variables");
 }
 
-export class JwtService {
-  private static readonly TOKEN_KEY = "authToken";
-  static decodeToken(token: string): JwtPayload | null {
-    try {
-      return jwtDecode<JwtPayload>(token);
-    } catch (error) {
-      console.error("Error decoding token:", error);
-      return null;
-    }
-  }
-  static isTokenValid(token: string): boolean {
-    try {
-      const decoded = this.decodeToken(token);
-      if (!decoded) return false;
-      // Check if token is expired
-      const currentTime = Math.floor(Date.now() / 1000);
-      return decoded.exp > currentTime;
-    } catch (error) {
-      return false;
-    }
-  }
+// Create a type-safe secret
+const jwtSecret: jwt.Secret = JWT_SECRET;
 
-  static getTokenData(token: string): {
-    email: string;
-    name: string;
-    picture: string;
-    role: string;
-  } | null {
-    const decoded = this.decodeToken(token);
-    if (!decoded) return null;
-
-    return {
-      email: decoded.email,
-      name: decoded.name,
-      picture: decoded.picture,
-      role: decoded.role,
-    };
-  }
-
-  static storeToken(token: string): void {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(this.TOKEN_KEY, token);
-    }
-  }
-
-  static getStoredToken(): string | null {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(this.TOKEN_KEY);
-    }
-    return null;
-  }
-
-  static removeToken(): void {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(this.TOKEN_KEY);
-    }
-  }
+interface TokenPayload extends JwtPayload {
+  userId: number;
+  isAdmin: boolean;
 }
+
+export const generateToken = (userId: number, isAdmin: boolean = false): string => {
+  return jwt.sign(
+    { userId, isAdmin },
+    jwtSecret,
+    { 
+      algorithm: 'HS256',
+      expiresIn: "1d" 
+    }
+  );
+};
+
+export const verifyToken = (token: string): TokenPayload => {
+  try {
+    if (!token) {
+      throw new Error("No token provided");
+    }
+
+    // Verify the token with explicit typing
+    const decoded = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
+    
+    // Type guard for the payload
+    if (typeof decoded === 'string' || !('userId' in decoded)) {
+      throw new Error("Invalid token payload");
+    }
+
+    return decoded as TokenPayload;
+  } catch (error) {
+    console.error("Token verification failed:", error);
+    throw error;
+  }
+};
