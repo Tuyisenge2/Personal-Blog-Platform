@@ -9,6 +9,8 @@ import { registerUser } from "@/actions/users";
 import { ClipLoader } from "react-spinners";
 import Image from "next/image";
 import basketballPlayer from "../../../public/bg-home.png";
+import basketballPlayer2 from "../../../public/bg-home2.jpg";
+
 import useToast from "@/hooks/useToast";
 
 const RegisterPage = () => {
@@ -158,7 +160,7 @@ const RegisterPage = () => {
 
       <div className="hidden md:flex flex-1 bg-gray-200 relative">
         <Image
-          src={basketballPlayer}
+          src={basketballPlayer2}
           alt="Basketball Player Illustration"
           fill
           className="object-cover"
