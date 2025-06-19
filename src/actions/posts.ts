@@ -39,11 +39,11 @@ export const getAllPosts = async (): Promise<any[]> => {
     .from(posts)
     .leftJoin(categories, eq(posts.category_id, categories.id));
 };
-
 export const addPost = async (
   title: string,
   content: string,
   categoryId: number | null,
+  authorId: number,
   image_url?: string
 ) => {
   const now = new Date();
@@ -54,6 +54,7 @@ export const addPost = async (
       content,
       image_url,
       category_id: categoryId,
+      author_id: authorId,
       created_at: now,
       updated_at: now,
     })
@@ -65,6 +66,32 @@ export const addPost = async (
     updated_at: newPost.updated_at ? new Date(newPost.updated_at) : now,
   };
 };
+
+// export const addPost = async (
+//   title: string,
+//   content: string,
+//   categoryId: number | null,
+//   image_url?: string
+// ) => {
+//   const now = new Date();
+//   const [newPost] = await db
+//     .insert(posts)
+//     .values({
+//       title,
+//       content,
+//       image_url,
+//       category_id: categoryId,
+//       created_at: now,
+//       updated_at: now,
+//     })
+//     .returning();
+//   revalidatePath("/posts");
+//   return {
+//     ...newPost,
+//     created_at: newPost.created_at ? new Date(newPost.created_at) : now,
+//     updated_at: newPost.updated_at ? new Date(newPost.updated_at) : now,
+//   };
+// };
 
 export const updatePost = async (
   id: number,
